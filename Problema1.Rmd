@@ -1,0 +1,87 @@
+---
+title: "Problema 1"
+author: "Rodrigo Farias"
+date: "July 11, 2016"
+output: html_document
+---
+
+```{r}
+
+library(ggplot2, warn.conflicts = FALSE)
+library(dplyr, warn.conflicts = FALSE)
+theme_set(theme_bw())
+ano.atual <- read.csv("~/Documents/workspace/AD1/problema1/dados/ano-atual.csv")
+```
+## Introdução
+No problema 1 da disciplina Análise de Dados 1 pede para ser feita uma análise sobre os dados coletados do site de transparência da câmara dos deputados. Esses dados contém todos os gastos de nossos deputados em 2016 usando a sua cota para exercício da atividade parlamentar.
+
+## Questão 1
+
+(a) **Questão** Escolha um subconjunto das variáveis que você considera interessante para investigar como nossos deputados gastam sua verba e comente qual a distribuição dos dados dessas variáveis, em termos de centralidade, extremos, concentração e simetria.
+
+  O conjunto escolhido são os gastos dos deputados paraibanos, o gráfico a seguir mostra o boxplot sobre todos os gastos de cada deputado. Onde a média de gastos está destacado em vermelho.  
+  
+```{r}
+panorama = ano.atual%>%select(1,5, 6, 15, 23)  %>% filter(sgUF =="PB")
+names(panorama) = c("partido", "nome", "estado", "descricao", "valor")
+
+panorama.sumarizado = panorama%>% group_by(nome)
+panorama.sumarizado.sum = panorama.sumarizado %>%
+  summarize(media= mean(valor))
+ggplot(panorama.sumarizado, mapping= aes(x = nome,
+                                         y = valor))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  geom_boxplot()+
+  geom_point(position = position_jitter(width = .2), 
+             alpha = .7) + 
+  geom_point(panorama.sumarizado.sum,
+             colour = "red", size = 1, 
+             mapping = aes(y = media, x = nome))
+
+```
+
+  É possível observar que os gastos dos parlamentares tem seus gastos centrais(dentro do box_plot) entre 0 e 1000 reais, os gastos são assimétricos pois é possível notar uma grande concentração na parte de baixo, e poucos pontos soltos acima de 5000. Nota-se também que a média é muito influenciada pelos valores extremos pois em geral ela é maior que 75% das observações.  
+
+(b) **Questão** Há algo surpreendente ou estranho nos dados?    
+Uma coisa estranha notada nos dados é a presença de valores negativos e alguns valores bem altos que se destacam em comparação com a maioria dos gastos. Ex. gastos acima de 15000.  
+
+(c) **Questão** como você sugere que um analista de dados lide com a parte surpreendente/estranha?    
+Eu sugiro que o analista investigue sobre os dados negativos e os muito altos para tentar achar um motivo para esses valores estranhos. Um valor muito alto pode ser por que o deputado prefere fazer menos declarações e pegar valores altos para isso. Já os valores negativos em sua maioria são emissão de passagens aéreas, o motivo para isso precisa de um estudo mais detalhado.
+ 
+
+
+## Questão 2.a
+#### Em que tipo de despesas nossos parlamentares gastam mais recursos de sua cota?
+```{r gastos.R}
+##Selecionando apenas as variavéis descricao dos gastos e valor-liquido
+gastos = ano.atual%>%select(15, 23)
+names(gastos) = c("descricao", "valor-liquido")
+
+## sumarizando os gastos por grupos e guardando sua soma.
+gastos.sumarizados = group_by(gastos, descricao)
+gastos.sumarizados.sum = gastos.sumarizados  %>% 
+  summarise(valorLiquido=sum(`valor-liquido`))
+
+ggplot(gastos.sumarizados.sum, aes(descricao, valorLiquido)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  geom_bar(stat="identity", position = "dodge") + coord_flip() 
+```
+
+Como pode ser observado, os maiores gastos dos nossos parlamentares são com "Divulgação de Atividade Parlamentar", "Emissão de Bilhete Aéreo" e "Locação de Veículos Automotores"
+
+## Questão 2.b
+####Quais tipos de despesas têm despesas que mais variam, que têm valores mais desiguais?
+
+Aqui vamos utilizar uma métrica chamada desvio padrão para tentarmos visualizar melhor como os valores variam. Desvio Padrão é a medida que informa a média de variação dos valores em torno da média.
+
+```{r}
+gastos.sumarizados.sd = aggregate(gastos.sumarizados$`valor-liquido`,
+                                  list(gastos$descricao), sd)
+names(gastos.sumarizados.sd) = c("Descricao", "desvio.padrao")
+
+ggplot(gastos.sumarizados.sd, aes(Descricao, desvio.padrao))+
+  geom_bar(stat="identity", position = "dodge") + coord_flip() 
+
+```
+
+As 3 categorias que mais variam são "Divulgação de Atividade Parlamentar", "Cunsultorias, pesquisas e trabalhos técnicos" e "Locação ou Fretamento de Aeronaves"
