@@ -2,10 +2,10 @@
 library(ggplot2, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 
-ano.atual <- read.csv("~/Documents/workspace/AD1/problema1/dados/ano-atual.csv")
+ano.atual <- read.csv("problema1/dados/ano-atual.csv")
 
 ##Selecionando os gastos da Paraíba
-panorama  = ano.atual%>%select(1,5, 6, 15, 23)  %>% filter(panorama$sgUF =="PB")
+panorama  = ano.atual%>%select(1,5, 6, 15, 23)  %>% filter(sgUF =="PB")
 names(panorama) = c("partido", "nome", "estado", "descricao", "valor")
 
 panorama.sumarizado = panorama%>% group_by(nome)
