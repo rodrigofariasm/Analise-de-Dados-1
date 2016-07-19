@@ -6,10 +6,8 @@ output: html_document
 ---
 
 ```{r}
-
 library(ggplot2, warn.conflicts = FALSE)
 library(dplyr, warn.conflicts = FALSE)
-theme_set(theme_bw())
 ano.atual <- read.csv("~/Documents/workspace/AD1/problema1/dados/ano-atual.csv")
 ```
 ## Introdução
