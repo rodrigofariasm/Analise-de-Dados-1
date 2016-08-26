@@ -1,0 +1,92 @@
+---
+title: "PCA"
+date: "August 26, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2, quietly = TRUE)
+require(plotly, quietly = TRUE)
+library(ggfortify, quietly = TRUE)
+# http://rpubs.com/sinhrks/basics
+require(GGally, quietly = TRUE)
+require(reshape2, quietly = TRUE)
+require(dplyr, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(cluster)
+library(ggdendro)
+theme_set(theme_bw())
+emendas <- read.csv("emendas_area_parlamentar.csv")
+```
+
+##Dados
+
+Os dados escolhidos para a tarefa é um subconjunto do arquivo emendas_area_parlamentar.csv, selecionando deste arquivos apenas as áreas: agricultura, defesa nacional e cultura. Essas três áreas foram escolhidas porque, provavelmente, são áreas mais distintas uma das outras, ao invés de saneamento e urbanismo, onde creio que são áreas mais correlacionadas. Sendo assim, espero os grupos formados sejam bem definidos e os eixos criados pelo PCA não sejam tão próximos, para facilitar visualização.
+
+
+Resolvi então usar o PCA nas seguintes Areas: Assitência Social, Saúde , Saneamento.
+
+```{r}
+emendas <- read.csv("emendas_area_parlamentar.csv")
+emendas <-subset(emendas, !is.na(NOME_PARLAMENTAR))
+emendas2 <- log(emendas[,2:18]+1)
+emendas2$NOME_PARLAMENTAR <- emendas$NOME_PARLAMENTAR
+emendas3 <- emendas2[c(13, 14, 2)]
+row.names(emendas3) = emendas2$NOME_PARLAMENTAR
+pr.out = prcomp(emendas3, scale = TRUE)
+kable(pr.out$rotation)
+
+autoplot(pr.out, label = TRUE, label.size = 2, shape = TRUE, 
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3)
+
+
+```
+
+Utilizando o PCA, é possível observar que os vetores todos tendem a direita, mas variam em relação ao eixo y. Nos indicando que as nuvens de deputados localizadas há direita tiveram emendas em uma das 3 aéreas, quanto mais a direita, mais investido em saneamento, os de baixo investiram mais em Saúde e os de cima me Assistência Social. Ja os a esquedas sobre o eixo x investem em outras áreas.
+
+Se quisermos ver os deputados que vai investem em saúde devemos ver quais deputados estão na nuvem inferior. Ex. Oswaldo Sobrinho.
+
+## Porcentagem de Variância Explicada
+
+```{r}
+plot_pve <- function(prout){
+  pr.var <- pr.out$sdev^2
+  pve <- pr.var / sum(pr.var)
+  df = data.frame(x = 1:NROW(pve), y = cumsum(pve))
+  ggplot(df, aes(x = x, y = y)) + 
+    geom_point(size = 3) + 
+    geom_line() + 
+    labs(x='Principal Component', y = 'Cumulative Proportion of Variance Explained')
+}
+
+plot_pve(pr.out)
+
+```
+
+O gráfico indica quanto da variância original estamos conseguindo reproduzir com menos variáveis. Com duas variáveis conseguimos representar pouco menos de 80% da variância original.
+
+##t-SNE
+
+```{r}
+library(Rtsne)
+tsne.out = Rtsne(log(emendas3 + 1), 
+                 verbose = TRUE, check_duplicates=FALSE)
+
+df = as.data.frame(tsne.out$Y)
+df$NOME_PARLAMENTAR = emendas2$NOME_PARLAMENTAR
+
+myPlot <- plot_ly(df, x = V1, y = V2, text = paste("Parlamentar: ", NOME_PARLAMENTAR), name = "nome", mode = "markers") %>%
+  layout(
+      title = "t-SNE",
+      xaxis = list(title = "V1"),
+      yaxis = list(title = "V2"),
+      margin = list(l = 65)
+    )
+
+myPlot 
+
+```
+
+Já sobre a visualização do t-SNE, observamos grupos mais bem formados e distintos entre si. Com isso é mais fácil notar parlamentares com emendas em áreas semelhantes e proximidades entre grupos. Nesse grupo de dados tivemos quatro grupos em forma de cluster ficando em direções opostas e apenas um grupo como uma listra, e alguns poucos pontos avulsos.

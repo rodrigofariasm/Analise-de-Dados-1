@@ -1,0 +1,53 @@
+---
+title: "Problema 2"
+output: html_document
+date: "July 27, 2016"
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(directlabels)
+theme_set(theme_bw())
+ano.atual <- read.csv("~/Documents/workspace/AD1/problema1/dados/ano-atual.csv")
+```
+
+## Visualiza????o antiga
+A visualiza????o ?? sobre a quantidade de dinheiro gasta em cada descri????o de gasto, onde cada
+barra corresponde ao total de gastos em cada categoria para cada m??s distinguido por cores.
+
+```{r, fig.width=10, fig.height=5, echo=TRUE}
+##filtrando para ter s?? os 5 primeiros meses
+meses = ano.atual %>% filter(numMes < 6)
+## Agrupando por mes e por tipo de despesa, e somando todos os gastos.
+meses.sum = meses %>% group_by(numMes, txtDescricao) %>% 
+  summarize(total = sum(vlrDocumento)/1e6)
+
+##Mapeando os n??meros para o tipo de M??s.
+meses.sum$numMes <- as.factor(meses.sum$numMes)
+levels(meses.sum$numMes) <- c("Janeiro", "Fevereiro", "Marco", "Abril", "Maio")
+
+ggplot(meses.sum,aes(x=factor(txtDescricao),y=total, fill = factor(numMes))) +
+  ylab("Gastos em Milhoes") + labs(x = "Tipo de gasto", fill = "Mes/2016") +
+  geom_bar(position = "dodge", stat = "identity") +
+  coord_flip()
+```
+
+## Visualiza????o melhorada
+```{r, fig.width=10, fig.height=10, echo=TRUE}
+##filtrando para ter s?? os 5 primeiros meses
+meses = ano.atual %>% filter(numMes < 6) %>% group_by(numMes, txtDescricao)
+## Agrupando por mes e por tipo de despesa, e somando todos os gastos.
+meses.sum = meses %>% 
+  summarize(total = sum(vlrDocumento)/1e6)
+gastos.por.mes = meses.sum %>% # Em milh??es
+  mutate(txtDescricao = as.factor(txtDescricao))
+
+ggplot(meses, aes(x = numMes, y = meses$vlrDocumento, colour = txtDescricao))+
+  labs(x = "Mes de 2016", y = "Gastos") + ylim(0, 50000)+
+  geom_point(position = position_jitter(width = 0.35), alpha = 0.1, na.rm = TRUE)+
+  facet_wrap(~ txtDescricao, ncol = 4) + 
+  theme(legend.position="none", strip.text.x = element_text(hjust = 0, size = 8))
+```
+
+Na visualiza????o melhorada colocamos um quadro para cada tipo de gasto, onde cada ponto no quadro representa um dado, coloquei os meses no eixo x para melhorar a percep????o de continuidade, e usei transpar??ncia de pontos para ver melhor a concentra????o dos gastos, e como elas mudam ou permanencem ao longo do tempo.

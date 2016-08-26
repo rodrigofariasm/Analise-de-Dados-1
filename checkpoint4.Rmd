@@ -13,23 +13,23 @@ names(cota.estado) <- c("sgUF", "sum")
 
 ```
 
-## Introdução
-No problema 1 da disciplina Análise de Dados 1 pede para ser feita uma análise sobre os dados coletados do site de transparência da câmara dos deputados. Esses dados contém todos os gastos de nossos deputados em 2016 usando a sua cota para exercício da atividade parlamentar.
-Nesse trabalho pretendo responder duas perguntar iniciais que levarão à formulação de mais duas perguntas.
+## Introdu????o
+No problema 1 da disciplina An??lise de Dados 1 pede para ser feita uma an??lise sobre os dados coletados do site de transpar??ncia da c??mara dos deputados. Esses dados cont??m todos os gastos de nossos deputados em 2016 usando a sua cota para exerc??cio da atividade parlamentar.
+Nesse trabalho pretendo responder duas perguntar iniciais que levar??o ?? formula????o de mais duas perguntas.
 
 
 
-##Pergunta 1: Levando em conta os gastos de janeiro a maio há alguma despesa que teve um aumento ou redução de gastos considerável durante esse período?
+##Pergunta 1: Levando em conta os gastos de janeiro a maio h?? alguma despesa que teve um aumento ou redu????o de gastos consider??vel durante esse per??odo?
 ####Entendendo os dados
-Os dados que iremos precisar aqui são os equivalentes aos 5 primeiros meses do ano, trabalhar só com esses meses é melhor pois é esperado que os valores declarados para esses meses, em sua maioria, já foram computados.
+Os dados que iremos precisar aqui s??o os equivalentes aos 5 primeiros meses do ano, trabalhar s?? com esses meses ?? melhor pois ?? esperado que os valores declarados para esses meses, em sua maioria, j?? foram computados.
 
 ```{r, fig.width=10, fig.height=5}
-##filtrando para ter só os 5 primeiros meses
+##filtrando para ter s?? os 5 primeiros meses
 trimestre1 = ano.atual %>% filter(numMes < 6)
 ## Agrupando por mes e por tipo de despesa, e somando todos os gastos.
 tri.sum = trimestre1 %>% group_by(numMes, txtDescricao) %>% summarize(sum = sum(vlrDocumento))
 
-##Mapeando os números para o tipo de Mês.
+##Mapeando os n??meros para o tipo de M??s.
 tri.sum$numMes <- as.factor(tri.sum$numMes)
 levels(tri.sum$numMes) <- c("Janeiro", "Fevereiro", "Marco", "Abril", "Maio")
 
@@ -39,14 +39,14 @@ ggplot(tri.sum,aes(x=factor(txtDescricao),y=sum/1000000, fill = factor(numMes)))
   coord_flip()
 ```
 
-Como pode ser visto há crescimento em todas as despesas até março, depois não há uma uniformidade no comportamento das despesas em relação aos meses, mas todos tiveram redução em Abril e no mês de Maio em alguns há redução enquanto em outros há aumento.
+Como pode ser visto h?? crescimento em todas as despesas at?? mar??o, depois n??o h?? uma uniformidade no comportamento das despesas em rela????o aos meses, mas todos tiveram redu????o em Abril e no m??s de Maio em alguns h?? redu????o enquanto em outros h?? aumento.
 
-Uma possível explicação para isso é que há algum tipo de gasto trismestral para a maioria dos deputados.
-Para investigarmos melhor vamos ver como a distribuição Emissões de bilhetes aéreos, que teve muita redução,  de Março para Abril se comporta.
+Uma poss??vel explica????o para isso ?? que h?? algum tipo de gasto trismestral para a maioria dos deputados.
+Para investigarmos melhor vamos ver como a distribui????o Emiss??es de bilhetes a??reos, que teve muita redu????o,  de Mar??o para Abril se comporta.
 
 ```{r, echo=TRUE, fig.width=0.01, fig.height=.01}
 gastosabrilmaio = ano.atual %>% filter((numMes == 4 | numMes == 3)
-                                        & txtDescricao == "Emissão Bilhete Aéreo")
+                                        & txtDescricao == "Emiss??o Bilhete A??reo")
 medias = gastosabrilmaio %>% 
   group_by(numMes) %>% 
   summarise(vlrDocumento = mean(vlrDocumento))
@@ -62,20 +62,20 @@ ggplot(gastosabrilmaio, mapping = aes(x = as.factor(numMes), y = vlrDocumento) )
 
 ![](plot45.png)  
 
-Como podemos ver, é muito semelhante a distribuição dos valores nos dois meses e a média e mediana encontram-se muito perto uma da outra o que faz nos constatar uma simetria nos dados, logo vamo ver a quantidade de emissões nos dois meses. Vamos então ver a quantidade de bilhetes emitidos em cada um dos meses.
+Como podemos ver, ?? muito semelhante a distribui????o dos valores nos dois meses e a m??dia e mediana encontram-se muito perto uma da outra o que faz nos constatar uma simetria nos dados, logo vamo ver a quantidade de emiss??es nos dois meses. Vamos ent??o ver a quantidade de bilhetes emitidos em cada um dos meses.
 
 ```{r}
 trimestre1 %>% count(numMes)
 ```
 
-Como imaginado, a quantidade de bilhetes emitidos em março foi aproximadamente 16.6% maior que em fevereiro e abril. Mas porque tantas emissões de bilhetes? Talvez o número de sessões nesse mês foi maior.
+Como imaginado, a quantidade de bilhetes emitidos em mar??o foi aproximadamente 16.6% maior que em fevereiro e abril. Mas porque tantas emiss??es de bilhetes? Talvez o n??mero de sess??es nesse m??s foi maior.
 
 
-##Pergunta 2: Qual estado economiza mais em relação a sua cota?
-Ainda considerando os primeiros 5 meses do ano, aqui estão a média de gastos dos primeiros 5 meses onde cada ponto representa 1 deputados e o ponto vermelho é a cota daquele deputado no mês.
+##Pergunta 2: Qual estado economiza mais em rela????o a sua cota?
+Ainda considerando os primeiros 5 meses do ano, aqui est??o a m??dia de gastos dos primeiros 5 meses onde cada ponto representa 1 deputados e o ponto vermelho ?? a cota daquele deputado no m??s.
 
 ```{r}
-## pergunta 2  Qual estado economiza mais em relação as cotas? 
+## pergunta 2  Qual estado economiza mais em rela????o as cotas? 
 deputados = ano.atual %>% filter(numMes<6) %>%
   group_by(sgUF, txNomeParlamentar) %>% summarize(sum = sum(vlrDocumento)/5)
 
@@ -88,7 +88,7 @@ ggplot(deputados, mapping = aes(x = sgUF, y = sum))+
 
 ```
 
-Algo interessante é que vemos alguns deputados que gastam mais que suas cotas mensais, isso é possível? Mas enfim, vamos ver qual estado economiza mais, pegando a média dos gastos dos deputados vamos ver qual está mais abaixo da cota
+Algo interessante ?? que vemos alguns deputados que gastam mais que suas cotas mensais, isso ?? poss??vel? Mas enfim, vamos ver qual estado economiza mais, pegando a m??dia dos gastos dos deputados vamos ver qual est?? mais abaixo da cota
 
 ```{r}
 estados = deputados %>% group_by(sgUF) %>% summarise(sum = mean(sum))
@@ -101,15 +101,15 @@ ggplot(estados, mapping = aes(x = sgUF, y = sum))+
 
 ```
 
-Olhando assim, vemos que Rio de Janeiro, Alagoas e Piauí são os que mais economizam, agora vamos ver em porcentagem em relação as cotas de cada estado.
+Olhando assim, vemos que Rio de Janeiro, Alagoas e Piau?? s??o os que mais economizam, agora vamos ver em porcentagem em rela????o as cotas de cada estado.
 
 ```{r}
 estados$pc = estados$sum/cota.estado$sum*100 
 ggplot(estados, mapping = aes(x = sgUF, y = pc))+
   geom_bar(position = "dodge", stat = "identity")+
-  labs( y ="Percentagem de cota gasta em média", x= "Estado")
+  labs( y ="Percentagem de cota gasta em m??dia", x= "Estado")
 
 ```
 
-Assim vemos que Alagoas é o estado que tem os deputados que economizam mais. Ou será os que trabalham menos?
+Assim vemos que Alagoas ?? o estado que tem os deputados que economizam mais. Ou ser?? os que trabalham menos?
 
