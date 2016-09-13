@@ -1,0 +1,66 @@
+---
+title: "Problema 4 CP 1"
+date: "September 12, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(GGally)
+library(dplyr)
+theme_set(theme_bw())
+movies <- read.csv("~/Documents/workspace/AD1/inferencia/dados/ml-latest-small/movies.csv")
+ratings <- read.csv("~/Documents/workspace/AD1/inferencia/dados/ml-latest-small/ratings.csv")
+genres <- read.csv("~/Documents/workspace/AD1/inferencia/dados/movie-genre.csv")
+tags <- read.csv("~/Documents/workspace/AD1/inferencia/dados/ml-latest-small/tags.csv")
+```
+
+## Os dados
+
+Os dados descrevem um rating 1-5 estrelas e marcadores do MovieLens, um serviço de recomendação de filmes. Contem 105339 ratings and 6138 marcações para 10329 filmes. Estes dadis foram criados por 668 usuários entre 03/04/1996 e 09/01/2016.
+
+Usuários foram selecionados aleatoriamente. Todos os usuários selecionados avaliaram pelo menos 20 filmes. Sem informacão geográfica inclusa.
+
+
+## Pergunta 1 _
+
+A pergunta 1 basicamente é escolher uma n-logia, a escolhida por mim foi Premonição (Final Destination), uma sequência de filmes da década 2000 composta por cinco filmes. Para sabermos quais dos filmes da trilogia tem a melhor avaliação fazemos e qual tem mais variação. 
+A figura abaixo mostra as ratings de cada um dos filmes, cada ponto vermelho representa uma avaliação, e o preto a média do filme.
+
+
+```{r fig.width=10}
+premonicao.filmes = subset(genres, genres$movieId == 3409 | genres$movieId == 6058
+                           | genres$movieId == 43679 | genres$movieId == 71252 | genres$movieId == 88932)
+
+ratings.premonicao = subset(ratings, ratings$movieId == 3409 | ratings$movieId == 6058
+                           | ratings$movieId == 43679 | ratings$movieId == 71252 | ratings$movieId == 88932)
+genres2 <- genres[,c(1,2)]
+ratings.premonicao <- merge(ratings.premonicao, genres2, by.movieId = "movieId")
+ratings.premonicao <- unique(ratings.premonicao)
+ratings.premonicao$title <- as.character(ratings.premonicao$title)
+ratings.premonicao$title[ratings.premonicao$title=="Final Destination, The (Final Destination 4) (Final Destination in 3-D, The) (2009)"] <- "Final Destination 4 (2009)"
+ratings.grouped = ratings.premonicao %>% group_by(title)
+## Agrupando por mes e por tipo de despesa, e somando todos os gastos.
+ratings.mean = ratings.grouped %>%
+  summarize(media = mean(rating))
+ratings.var = ratings.grouped %>%
+  summarize(variacao = var(rating))
+
+ggplot(ratings.premonicao, mapping= aes(x = title, y =rating)) + 
+    geom_point(size = 1, color="red") + 
+    geom_point(ratings.mean,
+             colour = "black", size = 2, alpha = 0.7,
+             mapping = aes(y = media, x = title))+
+    labs(x='Filme', y = 'Rating')
+
+ggplot(ratings.var, mapping=aes(x=title, y=variacao))+
+  geom_point(colour = "blue", size = 1.5, alpha=0.7)+
+  labs(x='Filme', y = 'Variacao')
+    
+```
+
+Respondendo a primeira questão, o filme da sequencia com a melhor média é o Final Destination 5(Premonição 5), com média 3.5 mas apenas uma avaliação. E a segunda questão, o filme com mais variação é Premonição 4 e temo o Premonição 5 com variação nula.
+
+
+##Pergunta 2 _
