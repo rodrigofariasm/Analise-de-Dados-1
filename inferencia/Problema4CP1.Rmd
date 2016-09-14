@@ -30,12 +30,14 @@ A figura abaixo mostra as ratings de cada um dos filmes, cada ponto vermelho rep
 
 
 ```{r fig.width=10}
+# Filmes de Premonição
 premonicao.filmes = subset(genres, genres$movieId == 3409 | genres$movieId == 6058
                            | genres$movieId == 43679 | genres$movieId == 71252 | genres$movieId == 88932)
-
+# Avaliações dos filmes
 ratings.premonicao = subset(ratings, ratings$movieId == 3409 | ratings$movieId == 6058
                            | ratings$movieId == 43679 | ratings$movieId == 71252 | ratings$movieId == 88932)
 genres2 <- genres[,c(1,2)]
+# Merge dos datasetes
 ratings.premonicao <- merge(ratings.premonicao, genres2, by.movieId = "movieId")
 ratings.premonicao <- unique(ratings.premonicao)
 ratings.premonicao$title <- as.character(ratings.premonicao$title)
@@ -60,7 +62,51 @@ ggplot(ratings.var, mapping=aes(x=title, y=variacao))+
     
 ```
 
-Respondendo a primeira questão, o filme da sequencia com a melhor média é o Final Destination 5(Premonição 5), com média 3.5 mas apenas uma avaliação. E a segunda questão, o filme com mais variação é Premonição 4 e temo o Premonição 5 com variação nula.
+Como essa amostra não representa todas as avaliações desse filme existentes no mundo, vamos usar inferência para tentarmos responder com um intervalo de confiança qual o melhor filme da sequencia. 
 
+```{r}
+library(resample)
+#para isso precisamos separar cada filme
+premonicao1 = ratings.premonicao %>% filter(movieId == 3409)
+premonicao2 = ratings.premonicao %>% filter(movieId == 6058)
+premonicao3 = ratings.premonicao %>% filter(movieId == 43679)
+premonicao4 = ratings.premonicao %>% filter(movieId == 71252)
+premonicao5 = ratings.premonicao %>% filter(movieId == 88932)
+
+bootstrap.media.premonicao1 = bootstrap(premonicao1$rating, mean, R = 1000)
+media.premonicao1 = CI.percentile(bootstrap.media.premonicao1, probs = c(.025, .975))
+
+bootstrap.media.premonicao2 = bootstrap(premonicao2$rating, mean, R = 1000)
+media.premonicao2 = CI.percentile(bootstrap.media.premonicao2, probs = c(.025, .975))
+
+bootstrap.media.premonicao3 = bootstrap(premonicao3$rating, mean, R = 1000)
+media.premonicao3 = CI.percentile(bootstrap.media.premonicao3, probs = c(.025, .975))
+
+bootstrap.media.premonicao4 = bootstrap(premonicao4$rating, mean, R = 1000)
+media.premonicao4 = CI.percentile(bootstrap.media.premonicao1, probs = c(.025, .975))
+
+bootstrap.media.premonicao5 = bootstrap(premonicao5$rating, mean, R = 1000)
+media.premonicao5 = CI.percentile(bootstrap.media.premonicao2, probs = c(.025, .975))
+
+# Unindo os dados
+filmes.premonicao <- data.frame(
+  rbind(
+    c("Premonicao 1", media.premonicao1),
+    c("Premonicao 2", media.premonicao2),
+    c("Premonicao 3", media.premonicao3),
+    c("Premonicao 4", media.premonicao4),
+    c("Premonicao 5", media.premonicao5)
+  )
+)
+
+ggplot(filmes.premonicao, aes(x = X1, ymin = X2, ymax = X3)) +
+  geom_errorbar(width = .2) +
+  ggtitle("Intervalo de confiança da estimativa \nda media das ratings dos filmes Premonicao")
+```
+
+Respondendo a primeira questão, o filme da sequencia com a melhor média é o Final Destination 5(Premonição 5) e o Premonicao 2. E a segunda questão, o filme com mais variação é Premonição 2 e Premonição 5 também, então com o intevalo de confiança muito alto, para os filmes 2 e 5, talvez o primeiro filme da sequencia que tem um intervalo de confiança menor e traz mais confiança a respeito do valor esperado.
 
 ##Pergunta 2 _
+
+Normalmente os filmes têm vários gêneros. Existe uma relação entre em quantos gêneros os filmes se encaixam e a avaliação que os filmes recebem?
+
