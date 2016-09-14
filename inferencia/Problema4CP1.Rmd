@@ -109,4 +109,45 @@ Respondendo a primeira questão, o filme da sequencia com a melhor média é o F
 ##Pergunta 2 _
 
 Normalmente os filmes têm vários gêneros. Existe uma relação entre em quantos gêneros os filmes se encaixam e a avaliação que os filmes recebem?
+Para isso vamos utilizar toda a nossa amostra disponibilizada pelo professor.
+Aqui montamos um dataset com o id do filme, o numero de generos e a média das avaliações.
+Agora vamos utilizar a média para vermos se a quantidade de gêneros tem alguma correlação com as avaliações
 
+```{r, warning=FALSE}
+media.filmes <- data.frame(movieId=numeric(0), genres.cardinality=numeric(0), media=numeric(0))
+
+for(id in 1:149532){
+ #se existir filme com id n
+ if(nrow( subset(genres, movieId == id) ) > 0){
+   # pega a avaliação dos filmes
+   id <- as.numeric(id)
+   movie.ratings <- subset(ratings, movieId == id)
+   
+   if(nrow(movie.ratings) > 0){
+     # se filme possui um gênero e é no genre
+     if(length(genres$genre[genres$movieId==id]) == 1 & genres$genre[genres$movieId==id]  == "0"){
+       v.genres.cardinality <- 0
+     }
+     else{
+         v.genres.cardinality <- as.numeric(sum(genres$movieId == id))
+     }
+     v.media <- mean(movie.ratings$rating)
+     # adiciona na tabela
+     media.filmes <- rbind(media.filmes, data.frame(movieId = id, genres.cardinality = v.genres.cardinality, media = v.media))
+   }
+ }
+}
+
+media.filmes.g <- media.filmes %>% group_by(genres.cardinality)
+media.groups.genre = media.filmes.g %>%
+  summarize(media.cardinality = mean(media))
+
+ggplot(media.groups.genre, mapping=aes(x=genres.cardinality, y=media.cardinality))+
+  geom_point(colour = "blue", size = 1.5, alpha=0.7)+
+  labs(x='Número de generos', y = 'Média das ratings')+ ylim(0,5)+
+  scale_x_continuous(breaks=seq(0,10,1))
+
+
+```
+
+Como podemos ver o número de gêneros por filme não influencia muito nas avaliações. Só os com generos acima do normal(10) que apresenta uma queda na média de avaliações que pode ser dado pelo fato de filme com 10 generos praticamente não existir e isso levar a presumir que pode ser obra de BOTS.
