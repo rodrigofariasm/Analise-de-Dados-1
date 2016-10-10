@@ -1,0 +1,37 @@
+---
+title: "Prob 5 CP2 Regressão"
+output: html_document
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(directlabels)
+theme_set(theme_bw())
+dados <- read.csv("speedDating.csv")
+```
+## Os dados
+
+Temos dados descrevendo 5000 encontros relâmpagos (speed dating, procura no google) de 4 minutos envolvendo 310 jovens americanos. Os dados originais foram coletados por professores da Columbia Business School. Aqui estamos usando uma versão com menos colunas para agilizar para vocês.
+
+Os participantes tinham vários encontros de 4 minutos por noite. Após cada um, preenchiam fichas avaliando aqueles com quem se encontraram. Cada linha nos dados representa um desses encontros.
+
+```{r}
+
+summary(dados)
+
+ggplot(dados[1:10,], aes(x = int_corr, y = prob)) + 
+  geom_point(alpha = 0.4)
+
+ggplot(dados, aes(x = age, y = attr)) + 
+  geom_hex()
+
+```
+
+## Pergunta 1
+
+Queremos saber quanto interesses e hobbies em comum influencia em quanto um participante gostou do outro.
+
+## Pergunta 2
+
+Será que a impressão que uma pessoa acha que deixou na outra pessoa, influencia em quanto ela vai gostar dessa pessoa? O fato de achar que a outra pessoa não gostou de você, fará você dizer que não gosta da pessoa como um meio de se defender?
