@@ -4,34 +4,108 @@ output: html_document
 ---
 
 ```{r, message=FALSE, warning=FALSE}
+require(GGally)
 library(ggplot2)
-library(dplyr)
-library(directlabels)
+library(pscl)
+library(dplyr, warn.conflicts = FALSE)
+library(broom)
+library(modelr)
 theme_set(theme_bw())
 dados <- read.csv("speedDating.csv")
 ```
 ## Os dados
 
-Temos dados descrevendo 5000 encontros relâmpagos (speed dating, procura no google) de 4 minutos envolvendo 310 jovens americanos. Os dados originais foram coletados por professores da Columbia Business School. Aqui estamos usando uma versão com menos colunas para agilizar para vocês.
+Temos dados descrevendo 5000 encontros relâmpagos de 4 minutos envolvendo 310 jovens americanos. Os dados originais foram coletados por professores da Columbia Business School. Aqui estamos usando uma versão com menos colunas para agilizar para vocês.
 
 Os participantes tinham vários encontros de 4 minutos por noite. Após cada um, preenchiam fichas avaliando aqueles com quem se encontraram. Cada linha nos dados representa um desses encontros.
-
-```{r}
-
-summary(dados)
-
-ggplot(dados[1:10,], aes(x = int_corr, y = prob)) + 
-  geom_point(alpha = 0.4)
-
-ggplot(dados, aes(x = age, y = attr)) + 
-  geom_hex()
-
-```
 
 ## Pergunta 1
 
 Queremos saber quanto interesses e hobbies em comum influencia em quanto um participante gostou do outro.
 
+Primeiro veremos plotaremos o modelo onde shar é a variável que aponta o nível de hobbies e interesse em comum x o quando ele gostou do parceiro.
+
+```{r, warning=FALSE}
+ggplot(dados, aes(x = shar, y = like)) + 
+  geom_point(alpha = 0.2, position = position_jitter(width = 0.3), color="green") +
+  labs(title="Interesses em Comum x Gosta", x= "Interesses em Comum", y="Like")
+```
+
+Como podemos perceber, não há uma correlação forte entre as duas variáveis, mas ela existe.
+Há uma nuvem de pontos mais espessa nos pontos onde x = y. Vamos aplicar o modelo.
+
+```{r,warning=FALSE}
+modelo1 <- lm(like ~ shar, data = dados)
+summary(modelo1)
+tidy(modelo1, conf.int = TRUE)
+ggplot(dados, aes(shar, like)) + 
+  geom_point(alpha = .4) + 
+  geom_line(aes(y = predict(modelo1, dados)), colour = "red")
+```
+
+Como podemos ver, o erro é bem alto e o Rˆ2 é 0.4223 o que indica que o modelo explica 42% da variância da variável dependente, e o intervalo de confiança não contêm o 0, então de fato Interesses em comum influencia em gostar ou não da pessoa.
+
+Agora veremos os residuos...
+```{r, warning=FALSE}
+ggplot(modelo1, aes(shar, .resid)) + 
+  labs(title="Residuos do modelo", x= "Interesses em comum", y="Residuos") +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 0, colour = "green")
+```
+
+#### Conclusão pergunta 1 -
+
+Analisando o modelo e os resíduos podemos notar que há de fato uma correlação entre gostar e ter interesses/hobbies em comum. O modelo de regressão linear gerado tende a subestimar os valores quando o interesse em comum é baixo e a superestima-los quando o interesse bobe, indicando que há outros fatores que influenciam e podem melhorar o modelo.
+
+
 ## Pergunta 2
 
-Será que a impressão que uma pessoa acha que deixou na outra pessoa, influencia em quanto ela vai gostar dessa pessoa? O fato de achar que a outra pessoa não gostou de você, fará você dizer que não gosta da pessoa como um meio de se defender?
+Será que o quão atraente uma pessoa acha a outra, influencia em quanto ela vai gostar dessa pessoa?
+
+```{r, warning=FALSE}
+ggplot(dados, aes(x = attr, y = like)) + 
+  geom_point(alpha = 0.2, position = position_jitter(width = 0.3), color="green") +
+  labs(title=" Atraente x Gostou", x= "Atraente", y="Like")
+```
+
+Como podemos perceber, não há uma correlação forte entre as duas variáveis, mas ela existe.
+Há uma nuvem de pontos mais espessa nos pontos onde x = y. Vamos tentar usar essa variável para melhorar nosso modelo anterior.
+
+```{r, warning=FALSE}
+modelo2 <- lm(like ~ attr, data = dados)
+summary(modelo2)
+tidy(modelo2, conf.int = TRUE)
+
+ggplot(dados, aes(attr, like)) + 
+  geom_point(alpha = .4) + 
+  geom_line(aes(y = predict(modelo2, dados)), colour = "blue")
+
+```
+
+Há um correlação, mas não tão forte. Semelhante ao modelo passado mas com um R-quadrado um pouco melhor (0.45).
+Vamos analisar os resíduos.
+```{r, warning=FALSE}
+ggplot(modelo2, aes(like, .resid)) + 
+  labs(title="Residuos do modelo 2", x= "Gostou", y="Residuos") +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 0, colour = "green")
+
+```
+
+#### Conclusão pergunta 2 -
+Interpretando os resíduos percebemos que o nosso modelo tende a superestimar o gostou quando o atraente é baixo e na medida que vai aumentando a grau de atraência o modelo tende a superestimar menos chegando até a subestimar alguns pontos. Como o intervalo de confiança só inclui números positivos pode-se dizer que quanto mais atraente uma pessoa acha a outra mais ela gosta dessa pessoa. Duh!
+Entretanto nos não podemos dizer que uma o fato de gostar de uma pessoa faz acha-la mais atraente ou vice-versa.
+
+
+## Bônus
+
+Vamos criar um novo modelo com os fatores Atraente e Interesses em comum juntos.
+
+```{r}
+modelo3 <- lm(like ~ attr+shar, data = dados)
+summary(modelo3)
+tidy(modelo2, conf.int = TRUE)
+
+```
+
+O modelo explica melhor a variância do like, Rˆ2 = 0.592, logo o modelo novo é bem melhor que os outros dois modelos, pois nesse tentamos explicar a variância usando duas variáveis ao invés de uma.
