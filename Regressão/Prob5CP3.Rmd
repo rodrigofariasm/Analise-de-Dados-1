@@ -1,0 +1,132 @@
+---
+title: "Prob 5 CP3 Regressão Logística"
+date: "October 15, 2016"
+output: html_document
+---
+```{r, message=FALSE, warning=FALSE}
+require(GGally)
+library(ggplot2)
+library(pscl)
+library(stargazer)
+library(dplyr, warn.conflicts = FALSE)
+library(broom)
+library(modelr)
+theme_set(theme_bw())
+dados <- read.csv("speedDating2.csv")
+```
+## Os dados
+
+Temos dados descrevendo 5000 encontros relâmpagos de 4 minutos envolvendo 310 jovens americanos. Os dados originais foram coletados por professores da Columbia Business School. Aqui estamos usando uma versão com menos colunas para agilizar para vocês.
+
+Os participantes tinham vários encontros de 4 minutos por noite. Após cada um, preenchiam fichas avaliando aqueles com quem se encontraram. Cada linha nos dados representa um desses encontros.
+Agora estaremos tentando explicar uma variável categórica, em busca dos fatores que têm mais efeito significativo na mesma, ela diz se houve match entre as duas pessoas no encontro.
+
+## Pergunta 1
+####Que fatores nos dados têm efeito significativo na chance do casal ter um match? E como é esse efeito (positivo/negativo)?
+Como há muitos fatores veremos cada um dos seguintes fatores separadamente, pois acredito que estes são os mais importantes.
+attr - nota para o quão atraente a outra pessoa foi avaliada
+fun - nota para o quão divertida a outra pessoa foi avaliada
+like - nota para o quanto a outra pessoa agradou no geral
+prob - nota para quanto se acha que a outra pessoa tem interesse em um reencontro
+shar - nota para quanto interesses são compartilhado com a outra pessoa
+sinc - nota para o quão sincera a outra pessoa foi avaliada
+Vamos ver cada variável separadamente. E o modelo tenta explicar a probabilidade de ocorrer o match.
+
+##### Atração
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$attr)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="pink") +
+    labs(title="Atracao X Match", x= "Match", y="Atracao")
+bm <- glm(dec ~ attr, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Como podemos ver atração tem uma correlação positiva, pelo gráfico vemos que quase não há sim quando os níveis de atração estão baixos. E como na regressão logistica o intervalo de confiança é > 1, confirma a correlação positiva.
+
+##### Engraçado
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$fun)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="green") +
+    labs(title="Engracado X Match", x= "Match", y="Engracado")
+bm <- glm(dec ~ fun, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Como podemos ver atração tem uma correlação positiva, pelo gráfico vemos que quase não há sim quando os níveis de atração estão baixos. Mas quando o nível de "Engraçadisse" é mais alto não há uniformidade, então só essa variável não é suficiente para o modelo.
+Na regressão logística o intervalo de confiança da variável fun é >1, confirmando a correlação positiva.
+
+##### Gostou
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$like)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="darkblue") +
+    labs(title="Gostou X Match", x= "Match", y="Gostou")
+bm <- glm(dec ~ like, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Nessa a correlação é mais positiva ainda, o intervalo de confiança na regressão logística apresenta os maiores valores. Então se uma pessoa do casal gostou da outra existe maior chance dar outra pessoa também gostar, visto que quando um gosta muito existe poucos que não dão match.
+
+##### Interesse em novo encontro
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$prob)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="orange") +
+    labs(title="Interesse X Match", x= "Match", y="Interesse")
+bm <- glm(dec ~ prob, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Há correlação positiva nessa variável, mas não tão forte quanto as outras.
+
+##### Interesses compartilhados
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$shar)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="cyan3") +
+    labs(title="Interesses compartilhados X Match", x= "Match", y="Interesses compartilhados")
+bm <- glm(dec ~ shar, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Há correlação positiva nessa variável, a interpretação é a mesma das variáveis acima.
+
+##### Sinceridade
+
+```{r, warning=FALSE}
+ggplot(dados, aes(dados$dec, dados$sinc)) +
+  geom_point(alpha = 0.1, position = position_jitter(width = 0.3), color="blueviolet") +
+    labs(title="Sinceridade X Match", x= "Match", y="Sinceridade")
+bm <- glm(dec ~ sinc, 
+          data = dados, 
+          family = "binomial")
+tidy(bm, conf.int = TRUE, exponentiate = TRUE)
+```
+
+Há correlação positiva nessa variável, porém ela é baixa.
+
+### Construindo um modelo mais completo
+
+```{r}
+modelo <- glm(dec ~ attr + fun + like + prob  + sinc + shar, data=dados, family = 'binomial')
+tidy(modelo, conf.int = TRUE, exponentiate = TRUE)
+```
+
+No modelo vemos que a única variável que tem efeito negativo é a sinceridade ConfInterval<1. As demais tem efeito positivo, dentre elas as que mais se destacam são Atração e Gostar. As demais não tem efeito muito alto.
+
+## Pergunta 2
+### Que fatores nos dados têm mais efeito na chance de um casal ter match?
+
+Aproveitando os resultados anteriores podemos ver que as três principais variáveis de efeito presentes no modelo são attr, sinc e like pois tem intervalos de confiança mais alto. Sendo like a variável de maior efeito, e ainda positivo.
